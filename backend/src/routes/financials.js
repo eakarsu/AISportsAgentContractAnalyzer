@@ -7,8 +7,13 @@ const router = express.Router();
 // GET /api/financials
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM financials ORDER BY created_at DESC');
-    res.json(result.rows);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const offset = (page - 1) * limit;
+    const countResult = await pool.query('SELECT COUNT(*) FROM financials');
+    const total = parseInt(countResult.rows[0].count);
+    const result = await pool.query('SELECT * FROM financials ORDER BY created_at DESC LIMIT $1 OFFSET $2', [limit, offset]);
+    res.json({ data: result.rows, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
   } catch (error) {
     console.error('Error fetching financials:', error);
     res.status(500).json({ error: 'Failed to fetch financials.' });

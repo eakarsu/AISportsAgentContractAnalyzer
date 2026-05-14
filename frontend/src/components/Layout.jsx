@@ -16,6 +16,8 @@ const navItems = [
   { path: '/clients', label: 'Clients', icon: '🧑‍💼' },
   { path: '/financials', label: 'Financials', icon: '💵' },
   { path: '/league-rules', label: 'League Rules', icon: '📖' },
+  { path: '/player-valuation', label: 'Player Valuation', icon: '💎' },
+  { path: '/injury-impact', label: 'Injury Impact', icon: '🩺' },
 ];
 
 export default function Layout({ children }) {

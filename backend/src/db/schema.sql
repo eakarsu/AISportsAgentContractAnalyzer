@@ -270,3 +270,39 @@ CREATE TABLE IF NOT EXISTS league_rules (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 14. AI Results (caching and history)
+CREATE TABLE IF NOT EXISTS ai_results (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  endpoint VARCHAR(100),
+  input_data JSONB,
+  result JSONB,
+  model_used VARCHAR(255),
+  tokens_used INTEGER,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 15. Negotiation Rounds (multi-round war room)
+CREATE TABLE IF NOT EXISTS negotiation_rounds (
+  id SERIAL PRIMARY KEY,
+  negotiation_id INTEGER REFERENCES negotiations(id) ON DELETE CASCADE,
+  round_number INTEGER NOT NULL,
+  offer_amount DECIMAL(15,2),
+  counter_amount DECIMAL(15,2),
+  offered_by VARCHAR(100),
+  notes TEXT,
+  ai_analysis JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Add new columns to existing tables
+ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_token VARCHAR(255);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS pdf_path VARCHAR(500);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id);
+ALTER TABLE salary_caps ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id);
+ALTER TABLE negotiations ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id);
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id);
