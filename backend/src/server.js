@@ -77,6 +77,9 @@ app.use('/api/league-rules', leagueRulesRoutes);
 app.use('/api/league_rules', leagueRulesRoutes);
 app.use('/api/ai', aiRoutes);
 
+// === Custom Views (4 features) ===
+app.use('/api/custom-views', require('./routes/customViews'));
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found.' });

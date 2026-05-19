@@ -18,6 +18,7 @@ const navItems = [
   { path: '/league-rules', label: 'League Rules', icon: '📖' },
   { path: '/player-valuation', label: 'Player Valuation', icon: '💎' },
   { path: '/injury-impact', label: 'Injury Impact', icon: '🩺' },
+  { path: '/custom-views', label: 'Contract Views', icon: '🧩' },
 ];
 
 export default function Layout({ children }) {

@@ -39,6 +39,7 @@ import GapNoMultiPartyNegotiationSupportAgentTeam from './pages/GapNoMultiPartyN
 import GapNoWebhooksNotifications from './pages/GapNoWebhooksNotifications'
 import GapNoAuditLogging from './pages/GapNoAuditLogging'
 import GapNoPublicApiOrThirdPartyIntegrations from './pages/GapNoPublicApiOrThirdPartyIntegrations'
+import CustomViewsPage from './pages/CustomViewsPage'
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -87,6 +88,7 @@ export default function App() {
       <Route path="/gap-no-webhooks-notifications" element={<ProtectedRoute><GapNoWebhooksNotifications /></ProtectedRoute>} />
       <Route path="/gap-no-audit-logging" element={<ProtectedRoute><GapNoAuditLogging /></ProtectedRoute>} />
       <Route path="/gap-no-public-api-or-third-party-integrations" element={<ProtectedRoute><GapNoPublicApiOrThirdPartyIntegrations /></ProtectedRoute>} />
+      <Route path="/custom-views" element={<ProtectedRoute><CustomViewsPage /></ProtectedRoute>} />
       </Routes>
   );
 }
