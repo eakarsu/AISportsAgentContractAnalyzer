@@ -41,3 +41,11 @@ Pattern reused: inline OpenRouter fetch + `parseAIJson` + `persistAIResult` (mat
 - `frontend/src/pages/InjuryImpactPage.jsx` calls `api.post('/ai/injury-impact', payload)`.
 - The shared API client attaches the JWT Bearer token from `localStorage` and surfaces 503 (missing key) responses.
 - Files modified this pass: none.
+
+## Apply pass 6 (close-out)
+- Implemented:
+  - `POST /api/ai/negotiation-tactics` — LLM-only tactic suggestions returning `{ tactics[], opening_move, fallback_position, walk_away_threshold }`.
+  - `POST /api/ai/endorsement-deal-recommender` — LLM-only brand-fit recommender returning `{ recommended_brands[], avoid[], talking_points[] }`.
+- Files touched: `backend/src/routes/ai.js`
+- Syntax check: PASS
+- Backlog remaining after pass 6: NEEDS-CREDS (official league NBA/NFL/MLB APIs), NEEDS-PRODUCT-DECISION (multi-party negotiation workflow, escrow tracking)

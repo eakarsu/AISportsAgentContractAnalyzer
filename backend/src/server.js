@@ -79,6 +79,7 @@ app.use('/api/ai', aiRoutes);
 
 // === Custom Views (4 features) ===
 app.use('/api/custom-views', require('./routes/customViews'));
+app.use('/api/escrow-holdback-tracker', require('./routes/escrowHoldbackTracker'));
 
 // 404 handler
 app.use((req, res) => {

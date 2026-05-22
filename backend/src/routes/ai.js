@@ -327,4 +327,128 @@ Respond ONLY with JSON:
   }
 });
 
+// POST /api/ai/negotiation-tactics - Suggest negotiation tactics (LLM-only)
+router.post('/negotiation-tactics', authenticateToken, aiRateLimiter, async (req, res) => {
+  try {
+    const { contract_terms, counterparty, athlete_profile, leverage_points } = req.body;
+    if (!contract_terms) return res.status(400).json({ error: 'contract_terms is required.' });
+
+    const inputData = { contract_terms, counterparty, athlete_profile, leverage_points };
+    const prompt = `You are an elite sports agent negotiation strategist. Suggest concrete tactics for this negotiation.
+Contract terms on the table: ${JSON.stringify(contract_terms)}
+Counterparty: ${JSON.stringify(counterparty || {})}
+Athlete profile: ${JSON.stringify(athlete_profile || {})}
+Leverage points: ${JSON.stringify(leverage_points || [])}
+
+Respond ONLY with JSON:
+{
+  "tactics": [
+    { "name": "<short tactic name>", "when_to_use": "<situation>", "expected_outcome": "<string>", "risk": "low|medium|high" }
+  ],
+  "opening_move": "<recommended first ask>",
+  "fallback_position": "<acceptable compromise>",
+  "walk_away_threshold": "<the line you will not cross>"
+}`;
+
+    const { OPENROUTER_MODEL, parseAIJson } = require('../services/openrouter');
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your-openrouter-api-key-here') {
+      return res.json({ tactics: [], opening_move: '', fallback_position: '', walk_away_threshold: '', note: 'Configure OPENROUTER_API_KEY for real analysis' });
+    }
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.CLIENT_URL || 'http://localhost:3000',
+        'X-Title': 'AI Sports Agent Contract Analyzer',
+      },
+      body: JSON.stringify({
+        model: OPENROUTER_MODEL,
+        messages: [
+          { role: 'system', content: 'You are an elite sports agent negotiation strategist. Respond with valid JSON only.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 1500, temperature: 0.4,
+      }),
+    });
+    const apiResult = await response.json();
+    const rawContent = apiResult.choices?.[0]?.message?.content || '';
+    const parsed = parseAIJson(rawContent) || {};
+    const resultData = {
+      tactics: parsed.tactics || [],
+      opening_move: parsed.opening_move || '',
+      fallback_position: parsed.fallback_position || '',
+      walk_away_threshold: parsed.walk_away_threshold || '',
+      model: apiResult.model,
+      tokensUsed: apiResult.usage?.total_tokens || 0,
+    };
+    await persistAIResult(req.user?.id, 'ai/negotiation-tactics', inputData, resultData);
+    res.json(resultData);
+  } catch (error) {
+    console.error('Negotiation tactics error:', error);
+    res.status(500).json({ error: 'Failed to suggest negotiation tactics.' });
+  }
+});
+
+// POST /api/ai/endorsement-deal-recommender - Recommend brand endorsement deals
+router.post('/endorsement-deal-recommender', authenticateToken, aiRateLimiter, async (req, res) => {
+  try {
+    const { athlete, deal_constraints } = req.body;
+    if (!athlete || !athlete.sport) return res.status(400).json({ error: 'athlete.sport is required.' });
+
+    const inputData = { athlete, deal_constraints };
+    const prompt = `You are a sports endorsement and brand-partnership strategist. Recommend best-fit brand deals for the athlete.
+Athlete: ${JSON.stringify(athlete)}
+Deal constraints: ${JSON.stringify(deal_constraints || {})}
+
+Respond ONLY with JSON:
+{
+  "recommended_brands": [
+    { "brand": "<brand>", "fit_score": <0-100>, "deal_type": "<ambassador|product|equity|appearance|social>", "estimated_value": "<USD/yr range>", "rationale": "<string>" }
+  ],
+  "avoid": ["<brand or category to avoid>"],
+  "talking_points": ["<pitch angle>"]
+}`;
+
+    const { OPENROUTER_MODEL, parseAIJson } = require('../services/openrouter');
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your-openrouter-api-key-here') {
+      return res.json({ recommended_brands: [], avoid: [], talking_points: [], note: 'Configure OPENROUTER_API_KEY for real analysis' });
+    }
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.CLIENT_URL || 'http://localhost:3000',
+        'X-Title': 'AI Sports Agent Contract Analyzer',
+      },
+      body: JSON.stringify({
+        model: OPENROUTER_MODEL,
+        messages: [
+          { role: 'system', content: 'You are a sports endorsement and brand-partnership strategist. Respond with valid JSON only.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 1500, temperature: 0.4,
+      }),
+    });
+    const apiResult = await response.json();
+    const rawContent = apiResult.choices?.[0]?.message?.content || '';
+    const parsed = parseAIJson(rawContent) || {};
+    const resultData = {
+      recommended_brands: parsed.recommended_brands || [],
+      avoid: parsed.avoid || [],
+      talking_points: parsed.talking_points || [],
+      model: apiResult.model,
+      tokensUsed: apiResult.usage?.total_tokens || 0,
+    };
+    await persistAIResult(req.user?.id, 'ai/endorsement-deal-recommender', inputData, resultData);
+    res.json(resultData);
+  } catch (error) {
+    console.error('Endorsement deal recommender error:', error);
+    res.status(500).json({ error: 'Failed to recommend endorsement deals.' });
+  }
+});
+
 module.exports = router;

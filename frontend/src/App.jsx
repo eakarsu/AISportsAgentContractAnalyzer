@@ -20,7 +20,11 @@ import CapSimulator from './pages/CapSimulator';
 import NegotiationWarRoom from './pages/NegotiationWarRoom';
 import PlayerValuationPage from './pages/PlayerValuationPage';
 import InjuryImpactPage from './pages/InjuryImpactPage';
+import EscrowHoldbackTracker from './pages/EscrowHoldbackTracker';
 import Layout from './components/Layout';
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
 // === Batch 08 Gaps & Frontend Mounts ===
 import CfMarketValuationEngineTrainedOnHistoricalContracts from './pages/CfMarketValuationEngineTrainedOnHistoricalContracts'
 import CfInjuryTimelinePredictorCorrelatingInjuryTypeWith from './pages/CfInjuryTimelinePredictorCorrelatingInjuryTypeWith'
@@ -50,6 +54,9 @@ function ProtectedRoute({ children }) {
 export default function App() {
   return (
     <Routes>
+        <Route path="/codex/custom-viz" element={<ProtectedRoute><CodexCustomVizFeature /></ProtectedRoute>} />
+        <Route path="/codex/operations" element={<ProtectedRoute><CodexOperationsFeature /></ProtectedRoute>} />
+
       <Route path="/" element={<LoginPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/contracts" element={<ProtectedRoute><ContractsPage /></ProtectedRoute>} />
@@ -70,6 +77,7 @@ export default function App() {
       <Route path="/negotiation-war-room" element={<ProtectedRoute><NegotiationWarRoom /></ProtectedRoute>} />
       <Route path="/player-valuation" element={<ProtectedRoute><PlayerValuationPage /></ProtectedRoute>} />
       <Route path="/injury-impact" element={<ProtectedRoute><InjuryImpactPage /></ProtectedRoute>} />
+      <Route path="/escrow-holdback-tracker" element={<ProtectedRoute><EscrowHoldbackTracker /></ProtectedRoute>} />
     {/* // === Batch 08 Gaps & Frontend Mounts === */}
       <Route path="/cf-market-valuation-engine-trained-on-historical-contracts" element={<ProtectedRoute><CfMarketValuationEngineTrainedOnHistoricalContracts /></ProtectedRoute>} />
       <Route path="/cf-injury-timeline-predictor-correlating-injury-type-with-return" element={<ProtectedRoute><CfInjuryTimelinePredictorCorrelatingInjuryTypeWith /></ProtectedRoute>} />
