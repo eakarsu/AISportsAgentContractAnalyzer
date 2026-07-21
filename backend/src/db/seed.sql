@@ -1,9 +1,7 @@
 -- Clear existing data
 TRUNCATE users, contracts, salary_caps, endorsements, free_agents, negotiations, performance, draft_scouting, injury_reports, team_rosters, trade_analysis, clients, financials, league_rules RESTART IDENTITY CASCADE;
 
--- Default admin user (password: password123)
-INSERT INTO users (email, password, name, role) VALUES
-('admin@sportsagent.com', '$2a$10$GKvWZQPTQJZr/RzwFyDIqeJa3.2UZl3SRJ7ljF0QuYBmgUXfb4Zbq', 'John Mitchell', 'admin');
+-- The guarded seed runner creates an administrator from environment-supplied credentials.
 
 -- ============================================================
 -- 1. CONTRACTS (16 entries)

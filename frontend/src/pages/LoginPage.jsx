@@ -32,11 +32,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = () => {
-    setEmail('admin@sportsagent.com');
-    setPassword('password123');
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       {/* Background */}
@@ -123,24 +118,6 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-4">
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-navy-700" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-navy-800 px-3 text-gray-500">or</span>
-              </div>
-            </div>
-
-            <button
-              onClick={handleQuickLogin}
-              className="w-full py-3 bg-accent-green/10 border border-accent-green/30 text-accent-green font-medium rounded-lg hover:bg-accent-green/20 transition-all duration-300 text-sm flex items-center justify-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Quick Login (Demo)
-            </button>
           </div>
         </div>
 

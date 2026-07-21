@@ -21,10 +21,12 @@ const tradeAnalysisRoutes = require('./routes/trade_analysis');
 const clientsRoutes = require('./routes/clients');
 const financialsRoutes = require('./routes/financials');
 const leagueRulesRoutes = require('./routes/league_rules');
-const aiRoutes = require('./routes/ai');
+const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
-const PORT = process.env.BACKEND_PORT || 3001;
+const PORT = process.env.PORT || process.env.BACKEND_PORT || 3001;
+if ((process.env.JWT_SECRET || '').length < 32 || !process.env.GOVERNANCE_TENANT_ID || !process.env.DATABASE_URL) throw new Error('JWT_SECRET (32+ characters), GOVERNANCE_TENANT_ID, and DATABASE_URL are required');
+const generatedRoutesEnabled = process.env.ENABLE_GENERATED_FEATURES === 'true' && process.env.NODE_ENV !== 'production';
 
 // Security
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -55,6 +57,7 @@ app.get('/api/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api', authenticateToken);
 app.use('/api/contracts', contractsRoutes);
 app.use('/api/salary-caps', salaryCapsRoutes);
 app.use('/api/salary_caps', salaryCapsRoutes);
@@ -75,11 +78,13 @@ app.use('/api/clients', clientsRoutes);
 app.use('/api/financials', financialsRoutes);
 app.use('/api/league-rules', leagueRulesRoutes);
 app.use('/api/league_rules', leagueRulesRoutes);
-app.use('/api/ai', aiRoutes);
+if (generatedRoutesEnabled) app.use('/api/ai', require('./routes/ai'));
 
 // === Custom Views (4 features) ===
-app.use('/api/custom-views', require('./routes/customViews'));
-app.use('/api/escrow-holdback-tracker', require('./routes/escrowHoldbackTracker'));
+app.use('/api/custom-views', authenticateToken, require('./routes/customViews'));
+app.use('/api/escrow-holdback-tracker', authenticateToken, require('./routes/escrowHoldbackTracker'));
+app.use('/api/governed-contract-analysis', require('./governance'));
+app.use('/api/governance', require('./governance'));
 
 // 404 handler
 app.use((req, res) => {
@@ -91,21 +96,6 @@ app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error.' });
 });
-
-app.use('/api/market-valuation-engine', require('./routes/marketValuationEngine')); app.use('/api/injury-timeline-predictor', require('./routes/injuryTimelinePredictor')); app.use('/api/negotiation-simulation', require('./routes/negotiationSimulation')); app.use('/api/endorsement-recommender', require('./routes/endorsementRecommender')); app.use('/api/trade-scenario-analyzer', require('./routes/tradeScenarioAnalyzer')); app.use('/api/league-data-ingest', require('./routes/leagueDataIngest'));
-
-// === Batch 08 Gaps & Frontend Mounts ===
-app.use('/api/gap-no-ai-driven-player-valuation-models-page-exists-no', require('./routes/gapNoAiDrivenPlayerValuationModelsPageExistsNo'));
-app.use('/api/gap-no-injury-performance-regression-prediction', require('./routes/gapNoInjuryPerformanceRegressionPrediction'));
-app.use('/api/gap-no-ai-suggested-negotiation-tactics-beyond-static-analysis', require('./routes/gapNoAiSuggestedNegotiationTacticsBeyondStaticAnalysis'));
-app.use('/api/gap-no-endorsement-deal-recommender', require('./routes/gapNoEndorsementDealRecommender'));
-app.use('/api/gap-no-integrations-with-official-league-apis-nba-nfl', require('./routes/gapNoIntegrationsWithOfficialLeagueApisNbaNfl'));
-app.use('/api/gap-no-escrow-holdback-tracking-for-cap-compliance', require('./routes/gapNoEscrowHoldbackTrackingForCapCompliance'));
-app.use('/api/gap-no-contract-template-library-with-auto-fill', require('./routes/gapNoContractTemplateLibraryWithAutoFill'));
-app.use('/api/gap-no-multi-party-negotiation-support-agent-team-third-parties', require('./routes/gapNoMultiPartyNegotiationSupportAgentTeamThirdParties'));
-app.use('/api/gap-no-webhooks-notifications', require('./routes/gapNoWebhooksNotifications'));
-app.use('/api/gap-no-audit-logging', require('./routes/gapNoAuditLogging'));
-app.use('/api/gap-no-public-api-or-third-party-integrations', require('./routes/gapNoPublicApiOrThirdPartyIntegrations'));
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

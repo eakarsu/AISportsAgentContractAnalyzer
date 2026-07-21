@@ -29,9 +29,9 @@ router.post('/login',
       if (!validPassword) return res.status(401).json({ error: 'Invalid email or password.' });
 
       const token = jwt.sign(
-        { id: user.id, email: user.email, name: user.name, role: user.role },
+        { id: user.id, email: user.email, name: user.name, role: user.role, tenantId: process.env.GOVERNANCE_TENANT_ID, subjectIds: [`actor:user:${user.id}`] },
         JWT_SECRET,
-        { expiresIn: '24h' }
+        { algorithm: 'HS256', expiresIn: '24h' }
       );
 
       res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
@@ -46,7 +46,7 @@ router.post('/login',
 router.post('/register',
   [
     body('email').isEmail().withMessage('Valid email is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('password').isLength({ min: 12 }).withMessage('Password must be at least 12 characters'),
     body('name').notEmpty().withMessage('Name is required'),
   ],
   async (req, res) => {
@@ -54,7 +54,7 @@ router.post('/register',
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
     try {
-      const { email, password, name, role } = req.body;
+      const { email, password, name } = req.body;
 
       const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
       if (existing.rows.length > 0) return res.status(409).json({ error: 'Email already in use.' });
@@ -63,28 +63,20 @@ router.post('/register',
       const hashedPassword = await bcrypt.hash(password, salt);
       const verifyToken = crypto.randomBytes(32).toString('hex');
 
-      // Add columns if they don't exist (graceful)
-      try {
-        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255)`);
-        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMP`);
-        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false`);
-        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_token VARCHAR(255)`);
-      } catch (_) {}
-
       const result = await pool.query(
         `INSERT INTO users (email, password, name, role, email_verify_token)
          VALUES ($1, $2, $3, $4, $5) RETURNING id, email, name, role`,
-        [email, hashedPassword, name, role || 'agent', verifyToken]
+        [email, hashedPassword, name, 'viewer', verifyToken]
       );
 
       const user = result.rows[0];
       const token = jwt.sign(
-        { id: user.id, email: user.email, name: user.name, role: user.role },
+        { id: user.id, email: user.email, name: user.name, role: user.role, tenantId: process.env.GOVERNANCE_TENANT_ID, subjectIds: [`actor:user:${user.id}`] },
         JWT_SECRET,
-        { expiresIn: '24h' }
+        { algorithm: 'HS256', expiresIn: '24h' }
       );
 
-      res.status(201).json({ token, user, verifyToken /* include in dev for testing */ });
+      res.status(201).json({ token, user });
     } catch (error) {
       console.error('Register error:', error);
       res.status(500).json({ error: 'Internal server error.' });
@@ -107,21 +99,13 @@ router.post('/forgot-password', async (req, res) => {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    try {
-      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255)`);
-      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMP`);
-    } catch (_) {}
-
     await pool.query(
       'UPDATE users SET reset_token=$1, reset_token_expiry=$2 WHERE email=$3',
       [resetToken, expiry, email]
     );
 
-    // In production, send email. For now, return token in dev mode.
-    const isDev = process.env.NODE_ENV !== 'production';
     res.json({
       message: 'If that email exists, a reset link has been sent.',
-      ...(isDev && { resetToken, note: 'resetToken shown in dev mode only' })
     });
   } catch (error) {
     console.error('Forgot password error:', error);
@@ -133,7 +117,7 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/reset-password',
   [
     body('token').notEmpty().withMessage('Reset token is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('password').isLength({ min: 12 }).withMessage('Password must be at least 12 characters'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -195,7 +179,7 @@ router.post('/change-password',
   authenticateToken,
   [
     body('current_password').notEmpty().withMessage('Current password is required'),
-    body('new_password').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
+    body('new_password').isLength({ min: 12 }).withMessage('New password must be at least 12 characters'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
