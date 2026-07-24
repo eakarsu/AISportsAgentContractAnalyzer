@@ -2,7 +2,8 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../../.env') });
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL;
+const OPENROUTER_BASE_URL = String(process.env.OPENROUTER_BASE_URL || '').replace(/\/$/, '');
 
 function parseAIJson(text) {
   if (!text) return null;
@@ -190,20 +191,7 @@ Respond ONLY with valid JSON:
 };
 
 async function analyzeWithAI(featureType, data, extraContext) {
-  if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your-openrouter-api-key-here') {
-    return {
-      analysis: {
-        risk_score: 5,
-        market_value: 'Demo mode - configure OPENROUTER_API_KEY',
-        recommendations: ['Configure your OpenRouter API key to get real AI analysis'],
-        red_flags: [],
-        comparable_players: [],
-        summary: 'AI analysis is in demo mode. Please configure your OpenRouter API key.'
-      },
-      model: 'demo-mode',
-      tokensUsed: 0,
-    };
-  }
+  if (!OPENROUTER_API_KEY || !OPENROUTER_MODEL || !OPENROUTER_BASE_URL) throw new Error('Exact OpenRouter configuration is required');
 
   const normalizedType = featureType.replace(/-/g, '_');
   const promptBuilder = featurePrompts[normalizedType];
@@ -213,7 +201,7 @@ async function analyzeWithAI(featureType, data, extraContext) {
 
   const prompt = promptBuilder(data, extraContext);
 
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
@@ -241,7 +229,8 @@ async function analyzeWithAI(featureType, data, extraContext) {
   }
 
   const result = await response.json();
-  const rawContent = result.choices[0].message.content;
+  const rawContent = String(result.choices?.[0]?.message?.content || '').trim();
+  if (!rawContent) throw new Error('OpenRouter returned empty content');
   const parsed = parseAIJson(rawContent);
 
   return {

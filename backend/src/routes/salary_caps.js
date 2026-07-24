@@ -15,13 +15,11 @@ const aiRateLimiter = rateLimit({
 });
 
 async function persistAIResult(userId, endpoint, inputData, result) {
-  try {
-    await pool.query(
-      `INSERT INTO ai_results (user_id, endpoint, input_data, result, model_used, tokens_used)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [userId || null, endpoint, JSON.stringify(inputData), JSON.stringify(result), result.model || null, result.tokensUsed || 0]
-    );
-  } catch (e) { console.error('Failed to persist AI result:', e.message); }
+  await pool.query(
+    `INSERT INTO ai_results (user_id, endpoint, input_data, result, model_used, tokens_used)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [userId || null, endpoint, JSON.stringify(inputData), JSON.stringify(result), result.model || null, result.tokensUsed || 0]
+  );
 }
 
 // GET /api/salary_caps with pagination
